@@ -1,4 +1,4 @@
-//! Print orchestration: download → type detection → dispatch to PDF / image / XPS / HTML / Office printers.
+//! Print orchestration: download ? type detection ? dispatch to PDF / image / XPS / HTML / Office printers.
 //!
 //! Progress is reported via the [`StatusSink`] callback; the event sink is implemented by the caller (e.g. tauri `emit`).
 
@@ -8,11 +8,11 @@ use crate::print::{build_print_ticket, extract_capabilities, PrintOptions, Print
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use winprint::printer::{FilePrinter, ImagePrinter, PdfiumPrinter, PrinterDevice, XpsPrinter};
-use winprint::ticket::PrintCapabilities;
+use winprint_ext::printer::{FilePrinter, ImagePrinter, PdfiumPrinter, PrinterDevice, XpsPrinter};
+use winprint_ext::ticket::PrintCapabilities;
 
 #[cfg(feature = "html")]
-use winprint::ticket::FeatureOptionPack;
+use winprint_ext::ticket::FeatureOptionPack;
 
 #[cfg(feature = "html")]
 use crate::html;
@@ -373,7 +373,7 @@ async fn print_html(
 
 async fn print_pdf(
     path: impl AsRef<Path>,
-    ticket: winprint::ticket::PrintTicket,
+    ticket: winprint_ext::ticket::PrintTicket,
     device: PrinterDevice,
 ) -> Result<(), String> {
     let printer = PdfiumPrinter::new(device);
@@ -389,7 +389,7 @@ async fn print_pdf(
 
 async fn print_image(
     path: impl AsRef<Path>,
-    ticket: winprint::ticket::PrintTicket,
+    ticket: winprint_ext::ticket::PrintTicket,
     device: PrinterDevice,
     auto_rotate: bool,
 ) -> Result<(), String> {
@@ -406,7 +406,7 @@ async fn print_image(
 
 async fn print_xps(
     path: impl AsRef<Path>,
-    ticket: winprint::ticket::PrintTicket,
+    ticket: winprint_ext::ticket::PrintTicket,
     device: PrinterDevice,
 ) -> Result<(), String> {
     let printer = XpsPrinter::new(device);
@@ -449,7 +449,7 @@ fn get_office_semaphore() -> &'static Semaphore {
 async fn print_office(
     id: &str,
     input_path: impl AsRef<Path>,
-    ticket: winprint::ticket::PrintTicket,
+    ticket: winprint_ext::ticket::PrintTicket,
     device: PrinterDevice,
     sink: &Arc<dyn StatusSink>,
 ) -> Result<(), String> {
@@ -482,9 +482,10 @@ async fn print_office(
 async fn print_office(
     _id: &str,
     _input_path: impl AsRef<Path>,
-    _ticket: winprint::ticket::PrintTicket,
+    _ticket: winprint_ext::ticket::PrintTicket,
     _device: PrinterDevice,
     _sink: &Arc<dyn StatusSink>,
 ) -> Result<(), String> {
     Err("Office printing is not enabled (enable the 'office' feature)".to_string())
 }
+

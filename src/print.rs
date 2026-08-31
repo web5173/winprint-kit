@@ -1,7 +1,7 @@
 //! Print options, capability probing, and print ticket building.
 
-use winprint::printer::PrinterDevice;
-use winprint::ticket::{
+use winprint_ext::printer::PrinterDevice;
+use winprint_ext::ticket::{
     Copies, FeatureOptionPack, PrintCapabilities, PrintTicket, PrintTicketBuilder,
 };
 
@@ -198,3 +198,4 @@ fn list_display_names<T: FeatureOptionPack>(options: &[T]) -> String {
         .collect::<Vec<_>>()
         .join(", ")
 }
+
