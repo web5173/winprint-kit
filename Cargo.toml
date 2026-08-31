@@ -1,0 +1,38 @@
+﻿[package]
+name = "winprint-kit"
+version = "0.1.0"
+edition = "2021"
+authors = ["web5173@foxmail.com"]
+description = "Windows printing/conversion toolkit built on winprint: download, type detection, and PDF/image/XPS/HTML/Office printing pipeline"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/web5173/winprint-kit"
+documentation = "https://docs.rs/winprint-kit"
+keywords = ["printer", "printing", "pdf", "html", "office", "xps", "windows"]
+categories = ["api-bindings", "os::windows-apis"]
+
+[features]
+default = []
+html = ["dep:webview2-com", "dep:windows_061"]
+office = ["dep:anyhow"]
+
+[dependencies]
+anyhow = { version = "1.0", optional = true }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }
+serde = { version = "1", features = ["derive"] }
+tempfile = "3"
+tokio = { version = "1", features = ["rt", "sync", "time", "process"] }
+url = "2"
+winprint = { version = "0.2.1", features = ["pdfium"] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = { version = "0.38", optional = true }
+windows_061 = { package = "windows", version = "0.61", optional = true, features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[package.metadata.docs.rs]
+all-features = true
+
