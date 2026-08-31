@@ -8,7 +8,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/web5173/winprint-kit"
 documentation = "https://docs.rs/winprint-kit"
-keywords = ["printer", "printing", "pdf", "html", "office", "xps", "windows"]
+keywords = ["printer", "printing", "pdf", "html", "windows"]
 categories = ["api-bindings", "os::windows-apis"]
 
 [features]
