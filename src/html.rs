@@ -8,12 +8,12 @@ use webview2_com::{
     CreateCoreWebView2EnvironmentCompletedHandler, NavigationCompletedEventHandler,
     PermissionRequestedEventHandler, PrintToPdfCompletedHandler,
 };
-use windows_061::core::{Interface, PCWSTR, PWSTR};
-use windows_061::Win32::Foundation::{E_POINTER, E_UNEXPECTED, FALSE, HWND};
-use windows_061::Win32::System::Com::{
+use windows::core::{Interface, PCWSTR, PWSTR};
+use windows::Win32::Foundation::{E_POINTER, E_UNEXPECTED, FALSE, HWND};
+use windows::Win32::System::Com::{
     CoInitializeEx, CoTaskMemFree, CoUninitialize, COINIT_APARTMENTTHREADED,
 };
-use windows_061::Win32::UI::WindowsAndMessaging::*;
+use windows::Win32::UI::WindowsAndMessaging::*;
 
 use webview2_com::Microsoft::Web::WebView2::Win32::*;
 
@@ -84,11 +84,11 @@ fn wait_with_pump_timeout<T>(
 }
 
 unsafe fn create_hidden_window() -> Result<HWND, String> {
-    let class_name = windows_061::core::w!("Static");
+    let class_name = windows::core::w!("Static");
     let hwnd = CreateWindowExW(
         WINDOW_EX_STYLE(0),
         class_name,
-        windows_061::core::w!(""),
+        windows::core::w!(""),
         WINDOW_STYLE(0),
         0,
         0,
@@ -171,12 +171,12 @@ fn html_to_pdf_inner(params: HtmlToPdfParams) -> Result<PathBuf, String> {
                 let result: Result<ICoreWebView2Environment, webview2_com::Error> = (|| {
                     error_code?;
                     env.ok_or_else(|| {
-                        webview2_com::Error::WindowsError(windows_061::core::Error::from(E_POINTER))
+                        webview2_com::Error::WindowsError(windows::core::Error::from(E_POINTER))
                     })
                 })(
                 );
                 tx.send(result)
-                    .map_err(|_| windows_061::core::Error::from(E_UNEXPECTED))
+                    .map_err(|_| windows::core::Error::from(E_UNEXPECTED))
             },
         ));
 
@@ -198,12 +198,12 @@ fn html_to_pdf_inner(params: HtmlToPdfParams) -> Result<PathBuf, String> {
                 let result: Result<ICoreWebView2Controller, webview2_com::Error> = (|| {
                     error_code?;
                     controller.ok_or_else(|| {
-                        webview2_com::Error::WindowsError(windows_061::core::Error::from(E_POINTER))
+                        webview2_com::Error::WindowsError(windows::core::Error::from(E_POINTER))
                     })
                 })(
                 );
                 tx.send(result)
-                    .map_err(|_| windows_061::core::Error::from(E_UNEXPECTED))
+                    .map_err(|_| windows::core::Error::from(E_UNEXPECTED))
             },
         ));
 
@@ -244,7 +244,7 @@ fn html_to_pdf_inner(params: HtmlToPdfParams) -> Result<PathBuf, String> {
         let (tx, rx) = mpsc::channel();
         let nav_handler =
             NavigationCompletedEventHandler::create(Box::new(move |_sender, args| {
-                let mut success = windows_061::core::BOOL(0);
+                let mut success = windows::core::BOOL(0);
                 if let Some(ref a) = args {
                     let _ = a.IsSuccess(&mut success);
                 }
@@ -318,7 +318,7 @@ fn html_to_pdf_inner(params: HtmlToPdfParams) -> Result<PathBuf, String> {
                     Ok(success.into())
                 })();
                 tx.send(result)
-                    .map_err(|_| windows_061::core::Error::from(E_UNEXPECTED))
+                    .map_err(|_| windows::core::Error::from(E_UNEXPECTED))
             }));
 
         webview7

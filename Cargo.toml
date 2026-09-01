@@ -1,6 +1,6 @@
 ﻿[package]
 name = "winprint-kit"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 authors = ["web5173@foxmail.com"]
 description = "Windows printing/conversion toolkit built on winprint: download, type detection, and PDF/image/XPS/HTML/Office printing pipeline"
@@ -13,7 +13,7 @@ categories = ["api-bindings", "os::windows-apis"]
 
 [features]
 default = []
-html = ["dep:webview2-com", "dep:windows_061"]
+html = ["dep:webview2-com", "dep:windows"]
 office = ["dep:anyhow"]
 
 [dependencies]
@@ -26,8 +26,8 @@ url = "2"
 winprint-ext = { version = "0.2.1", features = ["pdfium"] }
 
 [target.'cfg(windows)'.dependencies]
-webview2-com = { version = "0.38", optional = true }
-windows_061 = { package = "windows", version = "0.61", optional = true, features = [
+webview2-com = { version = "0.39", optional = true }
+windows = { version = "0.62", optional = true, features = [
     "Win32_Foundation",
     "Win32_System_Com",
     "Win32_UI_WindowsAndMessaging",
