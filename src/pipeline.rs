@@ -88,8 +88,7 @@ impl PrintCache {
         {
             return Ok(extract_capabilities(&caps));
         }
-        let caps = PrintCapabilities::fetch(&device)
-            .map_err(|e| format!("Failed to fetch capabilities: {}", e))?;
+        let caps = fetch_capabilities_blocking(&device).await?;
         if let Ok(mut s) = self.inner.try_lock() {
             s.capabilities_cache.insert(printer_name.to_string(), caps.clone());
         }
@@ -110,24 +109,28 @@ impl PrintCache {
         let device = device.ok_or_else(|| format!("Printer not found: {}", printer_name))?;
         let capabilities = match capabilities {
             Some(c) => c,
-            None => match PrintCapabilities::fetch(&device) {
-                Ok(caps) => {
-                    if let Ok(mut s) = self.inner.try_lock() {
-                        s.capabilities_cache
-                            .insert(printer_name.to_string(), caps.clone());
-                    }
-                    caps
+            None => {
+                let caps = fetch_capabilities_blocking(&device).await.map_err(|e| {
+                    format!("Failed to fetch capabilities for printer '{}': {}", printer_name, e)
+                })?;
+                if let Ok(mut s) = self.inner.try_lock() {
+                    s.capabilities_cache
+                        .insert(printer_name.to_string(), caps.clone());
                 }
-                Err(e) => {
-                    return Err(format!(
-                        "Failed to fetch capabilities for printer '{}': {}",
-                        printer_name, e
-                    ))
-                }
-            },
+                caps
+            }
         };
         Ok((device, capabilities))
     }
+}
+
+async fn fetch_capabilities_blocking(device: &PrinterDevice) -> Result<PrintCapabilities, String> {
+    let device = device.clone();
+    tokio::task::spawn_blocking(move || {
+        PrintCapabilities::fetch(&device).map_err(|e| format!("Failed to fetch capabilities: {e}"))
+    })
+    .await
+    .map_err(|e| format!("Capabilities task failed: {e}"))?
 }
 
 pub struct PrintPipeline {
