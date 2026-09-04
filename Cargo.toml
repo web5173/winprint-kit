@@ -1,6 +1,6 @@
 ﻿[package]
 name = "winprint-kit"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["web5173@foxmail.com"]
 description = "Windows printing/conversion toolkit built on winprint: download, type detection, and PDF/image/XPS/HTML/Office printing pipeline"

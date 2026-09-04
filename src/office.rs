@@ -15,6 +15,27 @@ pub enum OfficeKind {
     PowerPoint,
 }
 
+impl OfficeKind {
+    /// Human-readable Office application name (for failure detail text).
+    pub fn app_name(self) -> &'static str {
+        match self {
+            OfficeKind::Word => "Microsoft Word",
+            OfficeKind::Excel => "Microsoft Excel",
+            OfficeKind::PowerPoint => "Microsoft PowerPoint",
+        }
+    }
+}
+
+/// Map a detected file type (extension string) to the Office app required to open it.
+pub fn kind_for_file_type(file_type: &str) -> Option<OfficeKind> {
+    match file_type {
+        "doc" | "docx" | "odt" => Some(OfficeKind::Word),
+        "xls" | "xlsx" | "ods" => Some(OfficeKind::Excel),
+        "ppt" | "pptx" | "odp" => Some(OfficeKind::PowerPoint),
+        _ => None,
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OfficeStatus {
@@ -80,6 +101,27 @@ pub async fn is_office_installed(kind: OfficeKind) -> bool {
         OfficeKind::Word => status.word,
         OfficeKind::Excel => status.excel,
         OfficeKind::PowerPoint => status.powerpoint,
+    }
+}
+
+pub fn kind_from_path(path: &str) -> Option<OfficeKind> {
+    let ext = std::path::Path::new(path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_lowercase())?;
+    match ext.as_str() {
+        "doc" | "docx" | "odt" => Some(OfficeKind::Word),
+        "xls" | "xlsx" | "ods" => Some(OfficeKind::Excel),
+        "ppt" | "pptx" | "odp" => Some(OfficeKind::PowerPoint),
+        _ => None,
+    }
+}
+
+pub fn kind_display_name(kind: OfficeKind) -> &'static str {
+    match kind {
+        OfficeKind::Word => "Microsoft Word",
+        OfficeKind::Excel => "Microsoft Excel",
+        OfficeKind::PowerPoint => "Microsoft PowerPoint",
     }
 }
 

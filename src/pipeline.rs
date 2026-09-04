@@ -21,6 +21,8 @@ use tempfile::Builder as TempFileBuilder;
 #[cfg(feature = "office")]
 use crate::office;
 #[cfg(feature = "office")]
+use crate::office::OfficeKind;
+#[cfg(feature = "office")]
 use std::fs::remove_file;
 #[cfg(feature = "office")]
 use tokio::sync::Semaphore;
@@ -32,8 +34,55 @@ pub enum PrintStatus {
     Failed,
 }
 
+/// Machine-readable cause of a failed print. Applications localize `kind`; `detail` is a
+/// concise English fallback for logs and for kinds the app does not localize.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrintFailure {
+    pub kind: PrintFailureKind,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrintFailureKind {
+    #[cfg(feature = "html")]
+    WebView2NotInstalled,
+    #[cfg(feature = "office")]
+    OfficeNotInstalled(OfficeKind),
+    Other,
+}
+
+impl PrintFailure {
+    /// Generic failure; `detail` is the cause.
+    pub fn other(detail: impl Into<String>) -> Self {
+        Self {
+            kind: PrintFailureKind::Other,
+            detail: detail.into(),
+        }
+    }
+
+    #[cfg(feature = "html")]
+    pub fn webview2_missing() -> Self {
+        Self {
+            kind: PrintFailureKind::WebView2NotInstalled,
+            detail: "WebView2 Runtime is not installed (required for web page printing)"
+                .to_string(),
+        }
+    }
+
+    #[cfg(feature = "office")]
+    pub fn office_missing(kind: OfficeKind) -> Self {
+        Self {
+            kind: PrintFailureKind::OfficeNotInstalled(kind),
+            detail: format!(
+                "{} is not installed (required for Office document printing)",
+                kind.app_name()
+            ),
+        }
+    }
+}
+
 pub trait StatusSink: Send + Sync {
-    fn on_status(&self, id: &str, status: PrintStatus, error: Option<String>);
+    fn on_status(&self, id: &str, status: PrintStatus, error: Option<PrintFailure>);
 }
 
 struct CacheInner {
@@ -174,7 +223,7 @@ impl PrintPipeline {
             sink.on_status(
                 id,
                 PrintStatus::Failed,
-                Some("Only HTTP/HTTPS URLs are allowed".to_string()),
+                Some(PrintFailure::other("Only HTTP/HTTPS URLs are allowed")),
             );
             return;
         }
@@ -182,7 +231,7 @@ impl PrintPipeline {
         let (printer_device, capabilities) = match self.cache.resolve(printer_name).await {
             Ok(v) => v,
             Err(e) => {
-                sink.on_status(id, PrintStatus::Failed, Some(e));
+                sink.on_status(id, PrintStatus::Failed, Some(PrintFailure::other(e)));
                 return;
             }
         };
@@ -196,7 +245,12 @@ impl PrintPipeline {
         tokio::spawn(async move {
             macro_rules! sink_error {
                 ($msg:expr) => {
-                    sink.on_status(&id, PrintStatus::Failed, Some($msg.to_string()));
+                    sink.on_status(&id, PrintStatus::Failed, Some(PrintFailure::other($msg)));
+                };
+            }
+            macro_rules! sink_fail {
+                ($failure:expr) => {
+                    sink.on_status(&id, PrintStatus::Failed, Some($failure));
                 };
             }
             macro_rules! sink_status {
@@ -208,6 +262,11 @@ impl PrintPipeline {
             if let Some(ref url_type) = file_type::detect_type_from_url(&url) {
                 if file_type::is_html_type(url_type) {
                     sink_status!(PrintStatus::Printing);
+                    #[cfg(feature = "html")]
+                    if !crate::html::webview2_available() {
+                        sink_fail!(PrintFailure::webview2_missing());
+                        return;
+                    }
                     match print_html(
                         &url,
                         &printer_name,
@@ -239,6 +298,12 @@ impl PrintPipeline {
 
             if file_type == "html" || file_type == "htm" {
                 sink_status!(PrintStatus::Printing);
+                #[cfg(feature = "html")]
+                if !crate::html::webview2_available() {
+                    drop(temp_path);
+                    sink_fail!(PrintFailure::webview2_missing());
+                    return;
+                }
                 match print_html(
                     &url,
                     &printer_name,
@@ -258,6 +323,17 @@ impl PrintPipeline {
                 }
                 drop(temp_path);
                 return;
+            }
+
+            #[cfg(feature = "office")]
+            if file_type::is_office_type(&file_type) {
+                if let Some(kind) = office::kind_for_file_type(&file_type) {
+                    if !office::is_office_installed(kind).await {
+                        sink_fail!(PrintFailure::office_missing(kind));
+                        drop(temp_path);
+                        return;
+                    }
+                }
             }
 
             let print_ticket = match build_print_ticket(&printer_device, &capabilities, &options) {
@@ -456,6 +532,18 @@ async fn print_office(
     device: PrinterDevice,
     sink: &Arc<dyn StatusSink>,
 ) -> Result<(), String> {
+    let input_path = input_path.as_ref();
+    let input_str = input_path
+        .to_str()
+        .ok_or_else(|| "Input path contains invalid UTF-8".to_string())?;
+    if let Some(kind) = office::kind_from_path(input_str) {
+        if !office::is_office_installed(kind).await {
+            return Err(format!(
+                "{} is not installed. Office printing requires Microsoft Office 2010+.",
+                office::kind_display_name(kind)
+            ));
+        }
+    }
     let _permit = get_office_semaphore()
         .acquire()
         .await
@@ -463,13 +551,9 @@ async fn print_office(
 
     sink.on_status(id, PrintStatus::Printing, None);
 
-    let input_path = input_path.as_ref();
     let pdf_path = input_path.with_extension("pdf");
     let _pdf_guard = TempFileGuard(pdf_path.clone());
 
-    let input_str = input_path
-        .to_str()
-        .ok_or_else(|| "Input path contains invalid UTF-8".to_string())?;
     let output_str = pdf_path
         .to_str()
         .ok_or_else(|| "Output path contains invalid UTF-8".to_string())?;

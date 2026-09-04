@@ -2,11 +2,11 @@
 //!
 //! ```no_run
 //! use std::sync::Arc;
-//! use winprint_kit::{PrintPipeline, PrintStatus, StatusSink};
+//! use winprint_kit::{PrintFailure, PrintPipeline, PrintStatus, StatusSink};
 //!
 //! struct Sink;
 //! impl StatusSink for Sink {
-//!     fn on_status(&self, id: &str, status: PrintStatus, error: Option<String>) {
+//!     fn on_status(&self, id: &str, status: PrintStatus, error: Option<PrintFailure>) {
 //!         println!("[{id}] {status:?} {error:?}");
 //!     }
 //! }
@@ -44,5 +44,5 @@ mod download;
 mod pipeline;
 mod print;
 
-pub use pipeline::{PrintPipeline, PrintStatus, StatusSink};
+pub use pipeline::{PrintFailure, PrintFailureKind, PrintPipeline, PrintStatus, StatusSink};
 pub use print::{PageSizeDetail, PrintOptions, PrinterCapabilities};
