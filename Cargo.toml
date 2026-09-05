@@ -1,6 +1,6 @@
 ﻿[package]
 name = "winprint-kit"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["web5173@foxmail.com"]
 description = "Windows printing/conversion toolkit built on winprint: download, type detection, and PDF/image/XPS/HTML/Office printing pipeline"
@@ -23,7 +23,7 @@ serde = { version = "1", features = ["derive"] }
 tempfile = "3"
 tokio = { version = "1", features = ["rt", "sync", "time", "process"] }
 url = "2"
-winprint-ext = { version = "0.2.1", features = ["pdfium"] }
+winprint-ext = { version = "0.2.3", features = ["pdfium"] }
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = { version = "0.39", optional = true }

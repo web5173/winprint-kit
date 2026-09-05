@@ -248,6 +248,7 @@ impl PrintPipeline {
                     sink.on_status(&id, PrintStatus::Failed, Some(PrintFailure::other($msg)));
                 };
             }
+            #[cfg(feature = "html")]
             macro_rules! sink_fail {
                 ($failure:expr) => {
                     sink.on_status(&id, PrintStatus::Failed, Some($failure));
