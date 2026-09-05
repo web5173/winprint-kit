@@ -4,7 +4,7 @@ use url::Url;
 
 const SUPPORTED_TYPES: &[&str] = &[
     "pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "odt", "ods", "odp", "jpg", "jpeg", "png",
-    "gif", "bmp", "tif", "tiff", "webp", "svg", "heic", "heif", "avif", "jxl", "html", "htm",
+    "gif", "bmp", "tif", "tiff", "webp", "html", "htm",
     "xps",
 ];
 
@@ -75,11 +75,6 @@ pub fn detect_type_from_content_type(content_type: &str) -> Option<String> {
         "image/bmp" => "bmp",
         "image/tiff" => "tiff",
         "image/webp" => "webp",
-        "image/svg+xml" => "svg",
-        "image/heic" => "heic",
-        "image/heif" => "heif",
-        "image/avif" => "avif",
-        "image/jxl" => "jxl",
         "text/html" => "html",
         "application/xhtml+xml" => "htm",
         _ => return None,
@@ -101,19 +96,7 @@ pub fn is_office_type(typ: &str) -> bool {
 pub fn is_image_type(typ: &str) -> bool {
     matches!(
         typ,
-        "png"
-            | "jpg"
-            | "jpeg"
-            | "gif"
-            | "bmp"
-            | "tiff"
-            | "tif"
-            | "webp"
-            | "svg"
-            | "heic"
-            | "heif"
-            | "avif"
-            | "jxl"
+        "png" | "jpg" | "jpeg" | "gif" | "bmp" | "tiff" | "tif" | "webp"
     )
 }
 

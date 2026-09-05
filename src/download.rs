@@ -63,6 +63,7 @@ pub(crate) async fn download_and_detect(url: &str) -> Result<(TempPath, String),
         .tempfile()
         .map_err(|e| format!("Failed to create temporary file: {}", e))?;
 
+    let mut total: u64 = 0;
     if let Some(chunk) = first_chunk {
         if chunk.len() as u64 > MAX_DOWNLOAD_SIZE {
             return Err(format!(
@@ -73,9 +74,9 @@ pub(crate) async fn download_and_detect(url: &str) -> Result<(TempPath, String),
         temp_file
             .write_all(&chunk)
             .map_err(|e| format!("Failed to write to temporary file: {}", e))?;
+        total = chunk.len() as u64;
     }
 
-    let mut total: u64 = 0;
     while let Some(chunk) = response
         .chunk()
         .await
