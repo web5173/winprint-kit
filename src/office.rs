@@ -45,6 +45,10 @@ pub struct OfficeStatus {
 }
 
 pub async fn office_install_status() -> OfficeStatus {
+    #[cfg(debug_assertions)]
+    if std::env::var_os("WINPRINT_SIM_NO_OFFICE").is_some() {
+        return OfficeStatus::default();
+    }
     const SCRIPT: &str = r#"
 $w = [type]::GetTypeFromProgID('Word.Application')
 $e = [type]::GetTypeFromProgID('Excel.Application')

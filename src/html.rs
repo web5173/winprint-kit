@@ -112,6 +112,10 @@ fn default_user_data_folder() -> PathBuf {
 }
 
 pub fn webview2_available() -> bool {
+    #[cfg(debug_assertions)]
+    if std::env::var_os("WINPRINT_SIM_NO_WEBVIEW2").is_some() {
+        return false;
+    }
     unsafe {
         let mut version = PWSTR::null();
         let result =
