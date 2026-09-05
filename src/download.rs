@@ -45,7 +45,7 @@ pub(crate) async fn download_and_detect(url: &str) -> Result<(TempPath, String),
         .map(|b| b.starts_with(b"%PDF"))
         .unwrap_or(false);
 
-    if file_type.is_none() && is_pdf {
+    if is_pdf {
         file_type = Some("pdf".to_string());
     }
 

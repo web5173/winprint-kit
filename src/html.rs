@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use webview2_com::{
-    wait_with_pump, CreateCoreWebView2ControllerCompletedHandler,
+    CreateCoreWebView2ControllerCompletedHandler,
     CreateCoreWebView2EnvironmentCompletedHandler, NavigationCompletedEventHandler,
     PermissionRequestedEventHandler, PrintToPdfCompletedHandler,
 };
@@ -188,9 +188,8 @@ fn html_to_pdf_inner(params: HtmlToPdfParams) -> Result<PathBuf, String> {
         )
         .map_err(|e| format!("CreateCoreWebView2EnvironmentWithOptions failed: {}", e))?;
 
-        let environment = wait_with_pump(rx)
-            .map_err(|e| format!("wait_with_pump outer: {}", e))?
-            .map_err(|e| format!("wait_with_pump inner: {}", e))?;
+        let environment = wait_with_pump_timeout(rx, env_timeout, "Environment creation")?
+            .map_err(|e| format!("Environment creation callback error: {}", e))?;
 
         let (tx, rx) = mpsc::channel();
         let controller_handler = CreateCoreWebView2ControllerCompletedHandler::create(Box::new(
